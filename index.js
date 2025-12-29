@@ -1,19 +1,24 @@
 #!/usr/bin/env node
 /**
- * Agent Skills MCP Server
- * 
- * Turns directory-based skills (SKILL.md plus optional resources) into callable 
+ * Aegis Skills MCP Server
+ *
+ * Turns directory-based skills (SKILL.md plus optional resources) into callable
  * MCP tools for any MCP client (Codex, Copilot, Cursor, Claude, etc.)
- * 
+ *
+ * Designed to integrate with Aegis-CLI (https://github.com/Shin0205go/Aegis-cli)
+ * for role-based access control and skill management.
+ *
  * Features:
  * - Discovers skills from directories
  * - Exposes skill instructions and resources
  * - Can run bundled helper scripts
- * 
+ * - Provides skill manifest with permissions for Aegis Router
+ *
  * Tools provided:
  * - list_skills: List all available skills with metadata
+ * - get_skill_manifest: Get complete skill manifest with permissions (for Aegis Router)
  * - get_skill: Get the full SKILL.md instructions for a skill
- * - list_resources: List all resources bundled with a skill  
+ * - list_resources: List all resources bundled with a skill
  * - get_resource: Read a specific resource file
  * - run_script: Execute a bundled script
  */
@@ -150,14 +155,43 @@ async function loadSkills() {
             file => file.startsWith(skillDirPath) && path.basename(file) !== 'SKILL.md'
           );
           
+          // Parse allowed-tools (can be array or comma-separated string)
+          let allowedTools = [];
+          if (frontmatter['allowed-tools']) {
+            if (Array.isArray(frontmatter['allowed-tools'])) {
+              allowedTools = frontmatter['allowed-tools'];
+            } else if (typeof frontmatter['allowed-tools'] === 'string') {
+              allowedTools = frontmatter['allowed-tools'].split(',').map(t => t.trim());
+            }
+          }
+
+          // Parse allowedRoles (can be array or comma-separated string)
+          let allowedRoles = [];
+          if (frontmatter.allowedRoles) {
+            if (Array.isArray(frontmatter.allowedRoles)) {
+              allowedRoles = frontmatter.allowedRoles;
+            } else if (typeof frontmatter.allowedRoles === 'string') {
+              allowedRoles = frontmatter.allowedRoles.split(',').map(r => r.trim());
+            }
+          }
+
+          // Generate displayName from name if not provided
+          const displayName = frontmatter.displayName ||
+            frontmatter.name.split('-').map(word =>
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+
           skillsCache.set(frontmatter.name, {
             name: frontmatter.name,
+            displayName: displayName,
             description: frontmatter.description,
             folderName: skillFolderName,
             dirPath: skillDirPath,
             filePath: skillFilePath,
             content: skillContent,
             frontmatter: frontmatter,
+            allowedTools: allowedTools,
+            allowedRoles: allowedRoles,
             resources: resourceFiles.map(f => path.relative(skillDirPath, f))
           });
           
@@ -203,6 +237,33 @@ function registerToolsAndResources() {
     }
   );
   console.error('Registered tool: list_skills');
+
+  // ============================================================
+  // TOOL: get_skill_manifest
+  // Get the complete skill manifest for Aegis Router integration
+  // ============================================================
+  server.tool(
+    'get_skill_manifest',
+    'Get the complete skill manifest including permissions and allowed tools. Used by Aegis Router to determine skill availability and access control.',
+    {},
+    async () => {
+      const skills = Array.from(skillsCache.values()).map(skill => ({
+        id: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        allowedRoles: skill.allowedRoles,
+        allowedTools: skill.allowedTools
+      }));
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ skills }, null, 2)
+        }]
+      };
+    }
+  );
+  console.error('Registered tool: get_skill_manifest');
 
   // ============================================================
   // TOOL: get_skill
