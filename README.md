@@ -99,8 +99,7 @@ allowedRoles:
       "allowedTools": [
         "mcp__plugin_filesystem_filesystem__read_file",
         "mcp__plugin_filesystem_filesystem__write_file"
-      ],
-      "resourceCount": 3
+      ]
     }
   ]
 }

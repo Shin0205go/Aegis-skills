@@ -163,8 +163,7 @@ function registerTools() {
         displayName: skill.displayName,
         description: skill.description,
         allowedRoles: skill.allowedRoles,
-        allowedTools: skill.allowedTools,
-        resourceCount: skill.resources.length
+        allowedTools: skill.allowedTools
       }));
 
       return {
