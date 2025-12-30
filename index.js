@@ -15,8 +15,7 @@
  * - Provides skill manifest with permissions for Aegis Router
  *
  * Tools provided:
- * - get_skill_manifest: Get complete skill manifest with permissions (for Aegis Router)
- * - list_skills: List all available skills with metadata
+ * - list_skills: List all skills with metadata and permissions (for Aegis Router)
  * - get_skill: Get the full SKILL.md instructions for a skill
  * - list_resources: List all resources bundled with a skill
  * - get_resource: Read a specific resource file
@@ -151,12 +150,12 @@ async function loadSkills() {
  */
 function registerTools() {
   // ============================================================
-  // TOOL: get_skill_manifest
-  // Get the complete skill manifest for Aegis Router integration
+  // TOOL: list_skills
+  // List all available skills with full metadata for Aegis Router
   // ============================================================
   server.tool(
-    'get_skill_manifest',
-    'Get the complete skill manifest including permissions and allowed tools. Used by Aegis Router to determine skill availability and access control.',
+    'list_skills',
+    'List all available skills with metadata, permissions, and allowed tools. Used by Aegis Router to determine skill availability and access control.',
     {},
     async () => {
       const skills = Array.from(skillsCache.values()).map(skill => ({
@@ -164,38 +163,14 @@ function registerTools() {
         displayName: skill.displayName,
         description: skill.description,
         allowedRoles: skill.allowedRoles,
-        allowedTools: skill.allowedTools
+        allowedTools: skill.allowedTools,
+        resourceCount: skill.resources.length
       }));
 
       return {
         content: [{
           type: 'text',
           text: JSON.stringify({ skills }, null, 2)
-        }]
-      };
-    }
-  );
-  console.error('Registered tool: get_skill_manifest');
-
-  // ============================================================
-  // TOOL: list_skills
-  // List all available skills with their metadata
-  // ============================================================
-  server.tool(
-    'list_skills',
-    'List all available skills with their name and description. IMPORTANT: When asked to use a skill, ALWAYS call this first to find the skill, then call get_skill to read its instructions before proceeding.',
-    {},
-    async () => {
-      const skills = Array.from(skillsCache.values()).map(skill => ({
-        name: skill.name,
-        description: skill.description,
-        resource_count: skill.resources.length
-      }));
-
-      return {
-        content: [{
-          type: 'text',
-          text: JSON.stringify(skills, null, 2)
         }]
       };
     }

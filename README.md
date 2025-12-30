@@ -9,12 +9,12 @@
 ```
 Aegis Router
     │
-    └── get_skill_manifest で全スキル情報を取得
+    └── list_skills で全スキル情報を取得
             │
             ▼
 Aegis Skills MCP Server
     │
-    ├── get_skill_manifest ツール
+    ├── list_skills ツール
     │   └── 全スキルの一覧と権限情報を返す
     │
     └── skills/
@@ -80,9 +80,9 @@ allowedRoles:
 
 ## 提供されるMCPツール
 
-### `get_skill_manifest`
+### `list_skills`
 
-Aegis Router連携用のスキルマニフェストを取得します。
+利用可能なすべてのスキルとメタデータ・権限情報を取得します。Aegis Routerがスキルの可用性とアクセス制御を決定するために使用します。
 
 **パラメータ:** なし
 
@@ -99,19 +99,12 @@ Aegis Router連携用のスキルマニフェストを取得します。
       "allowedTools": [
         "mcp__plugin_filesystem_filesystem__read_file",
         "mcp__plugin_filesystem_filesystem__write_file"
-      ]
+      ],
+      "resourceCount": 3
     }
   ]
 }
 ```
-
-### `list_skills`
-
-利用可能なすべてのスキルの一覧を取得します。
-
-**パラメータ:** なし
-
-**戻り値:** スキル名、説明、リソース数を含むJSON配列
 
 ### `get_skill`
 
@@ -156,14 +149,15 @@ Aegis Router連携用のスキルマニフェストを取得します。
 
 ## Aegis-CLI との連携
 
-Aegis Router は `get_skill_manifest` ツールを呼び出して、利用可能なスキルとその権限情報を取得します。
+Aegis Router は `list_skills` ツールを呼び出して、利用可能なスキルとその権限情報を取得します。
 
 ```typescript
 // Aegis Router での使用例
-const manifest = await skillServer.get_skill_manifest();
+const result = await skillServer.list_skills();
+const { skills } = JSON.parse(result);
 
 // ユーザーのロールに基づいてフィルタリング
-const availableSkills = manifest.skills.filter(skill =>
+const availableSkills = skills.filter(skill =>
   skill.allowedRoles.includes('*') ||
   skill.allowedRoles.includes(userRole)
 );
