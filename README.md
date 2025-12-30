@@ -1,24 +1,20 @@
 # Aegis Skills MCP Server
 
-ディレクトリベースのスキルをMCP（Model Context Protocol）ツールとして公開するサーバーです。
+スキルマニフェストを提供するMCP（Model Context Protocol）サーバーです。
 
 [Aegis-CLI](https://github.com/Shin0205go/Aegis-cli) と連携し、ロールベースのアクセス制御とスキル管理を実現します。
-
-## 概要
-
-各スキルは `SKILL.md` ファイルと関連リソースで構成され、AIエージェントが動的にスキルを取得・実行できます。
 
 ## アーキテクチャ
 
 ```
 Aegis Router
     │
-    └── get_skill_manifest で全スキル情報を取得
+    └── list_skills で全スキル情報を取得
             │
             ▼
 Aegis Skills MCP Server
     │
-    ├── get_skill_manifest ツール
+    ├── list_skills ツール
     │   └── 全スキルの一覧と権限情報を返す
     │
     └── skills/
@@ -38,47 +34,26 @@ npm install
 
 ## 使い方
 
-### 基本的な起動
-
 ```bash
-node index.js [skills-directory]
-```
-
-- `skills-directory`: スキルが格納されているディレクトリのパス（省略時: `~/.skills`）
-
-### 例
-
-```bash
-# デフォルトのスキルディレクトリを使用
+# デフォルトのスキルディレクトリを使用 (~/.skills)
 node index.js
 
 # カスタムディレクトリを指定
 node index.js /path/to/my/skills
 
 # 同梱のサンプルスキルを使用
-node index.js ./skills
+npm run start:sample
 ```
 
-## スキルの構造
+## スキル定義 (SKILL.md)
 
-各スキルは以下の構造を持つディレクトリです：
-
-```
-skill-name/
-├── SKILL.md          # スキルの説明とプロンプト（必須）
-├── resource1.py      # リソースファイル（任意）
-├── resource2.js
-└── subdirectory/
-    └── resource3.txt
-```
-
-### SKILL.md の形式
+各スキルディレクトリに `SKILL.md` ファイルを配置します：
 
 ```yaml
 ---
 name: skill-name
 displayName: Skill Display Name  # 省略時はnameから自動生成
-description: スキルの簡単な説明
+description: スキルの説明
 allowed-tools:
   - mcp__plugin_filesystem_filesystem__read_file
   - mcp__plugin_filesystem_filesystem__write_file
@@ -90,7 +65,7 @@ allowedRoles:
 
 # スキル名
 
-ここにスキルの詳細な説明やプロンプトを記述します。
+スキルの詳細な説明やプロンプトを記述します。
 ```
 
 ### フロントマターのフィールド
@@ -107,15 +82,7 @@ allowedRoles:
 
 ### `list_skills`
 
-利用可能なすべてのスキルの一覧を取得します。
-
-**パラメータ:** なし
-
-**戻り値:** スキル名、説明、リソース数を含むJSON配列
-
-### `get_skill_manifest`
-
-Aegis Router連携用のスキルマニフェストを取得します。
+利用可能なすべてのスキルとメタデータ・権限情報を取得します。Aegis Routerがスキルの可用性とアクセス制御を決定するために使用します。
 
 **パラメータ:** なし
 
@@ -164,7 +131,7 @@ Aegis Router連携用のスキルマニフェストを取得します。
 - `skill` (string, 必須): スキル名
 - `path` (string, 必須): リソースファイルの相対パス
 
-**戻り値:** ファイルの内容（テキストまたはBase64エンコードされたバイナリ）
+**戻り値:** ファイルの内容
 
 ### `run_script`
 
@@ -175,25 +142,21 @@ Aegis Router連携用のスキルマニフェストを取得します。
 - `path` (string, 必須): スクリプトファイルの相対パス
 - `args` (array, 任意): スクリプトに渡す引数
 
-**対応スクリプト:**
-- Python (`.py`)
-- Shell (`.sh`)
-- Node.js (`.js`)
+**対応スクリプト:** Python (`.py`)、Shell (`.sh`)、Node.js (`.js`)
 
-**戻り値:** スクリプトの実行結果（stdout/stderr）
+**戻り値:** スクリプトの実行結果
 
 ## Aegis-CLI との連携
 
-### Aegis Router からの使用
-
-Aegis Router は `get_skill_manifest` ツールを呼び出して、利用可能なスキルとその権限情報を取得します。これにより、ユーザーのロールに基づいて適切なスキルのみを提供できます。
+Aegis Router は `list_skills` ツールを呼び出して、利用可能なスキルとその権限情報を取得します。
 
 ```typescript
 // Aegis Router での使用例
-const manifest = await skillServer.get_skill_manifest();
+const result = await skillServer.list_skills();
+const { skills } = JSON.parse(result);
 
 // ユーザーのロールに基づいてフィルタリング
-const availableSkills = manifest.skills.filter(skill =>
+const availableSkills = skills.filter(skill =>
   skill.allowedRoles.includes('*') ||
   skill.allowedRoles.includes(userRole)
 );
@@ -206,8 +169,6 @@ const availableSkills = manifest.skills.filter(skill =>
 - `allowedRoles: ["editor", "admin"]` - editor または admin ロール
 
 ## 同梱サンプルスキル
-
-`skills/` ディレクトリに以下のサンプルスキルが含まれています：
 
 | スキル | 説明 | 許可ロール |
 |--------|------|-----------|
@@ -250,7 +211,6 @@ const availableSkills = manifest.skills.filter(skill =>
 ## 関連リンク
 
 - [Aegis-CLI](https://github.com/Shin0205go/Aegis-cli) - ロールベースアクセス制御付きCLI
-- [Agent Skills 仕様](https://agentskills.io) - Agent Skills公式仕様
 - [MCP](https://modelcontextprotocol.io) - Model Context Protocol
 
 ## ライセンス

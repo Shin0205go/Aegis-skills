@@ -15,8 +15,7 @@
  * - Provides skill manifest with permissions for Aegis Router
  *
  * Tools provided:
- * - list_skills: List all available skills with metadata
- * - get_skill_manifest: Get complete skill manifest with permissions (for Aegis Router)
+ * - list_skills: List all skills with metadata and permissions (for Aegis Router)
  * - get_skill: Get the full SKILL.md instructions for a skill
  * - list_resources: List all resources bundled with a skill
  * - get_resource: Read a specific resource file
@@ -38,91 +37,30 @@ const skillsCache = new Map();
 const SKILLS_DIR = process.argv[2] || path.join(require('os').homedir(), '.skills');
 
 const server = new McpServer({
-  name: "agent-skills",
+  name: "aegis-skills",
   version: "1.0.0"
 });
 
 /**
  * Recursively finds all files in a directory.
- * @param {string} dir - The directory to search.
- * @returns {Promise<string[]>} A promise that resolves to a list of absolute file paths.
  */
 async function getFilesInDir(dir) {
-    let files = [];
-    try {
-        const entries = await fs.readdir(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                files = files.concat(await getFilesInDir(fullPath));
-            } else {
-                files.push(fullPath);
-            }
-        }
-    } catch (error) {
-        console.error(`Could not read directory: ${dir}`, error);
+  let files = [];
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files = files.concat(await getFilesInDir(fullPath));
+      } else {
+        files.push(fullPath);
+      }
     }
-    return files;
-}
-
-/**
- * Generate <available_skills> XML for agent context
- * This format is recommended by the Agent Skills specification for Claude models
- */
-function generateAvailableSkillsXml() {
-  const lines = ['<available_skills>'];
-  
-  for (const [, skill] of skillsCache) {
-    lines.push('<skill>');
-    lines.push('<name>');
-    lines.push(escapeXml(skill.name));
-    lines.push('</name>');
-    lines.push('<description>');
-    lines.push(escapeXml(skill.description));
-    lines.push('</description>');
-    lines.push('<location>');
-    lines.push(escapeXml(skill.filePath));
-    lines.push('</location>');
-    lines.push('</skill>');
+  } catch (error) {
+    console.error(`Could not read directory: ${dir}`, error);
   }
-  
-  lines.push('</available_skills>');
-  return lines.join('\n');
+  return files;
 }
-
-/**
- * Escape XML special characters
- */
-function escapeXml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/**
- * Get MIME type based on file extension
- */
-function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes = {
-    '.md': 'text/markdown',
-    '.txt': 'text/plain',
-    '.py': 'text/x-python',
-    '.js': 'application/javascript',
-    '.json': 'application/json',
-    '.html': 'text/html',
-    '.css': 'text/css',
-    '.sh': 'application/x-sh',
-    '.yaml': 'text/yaml',
-    '.yml': 'text/yaml',
-    '.xml': 'application/xml',
-  };
-  return mimeTypes[ext] || 'application/octet-stream';
-}
-
 
 /**
  * Loads skills from the specified directory and caches their metadata.
@@ -150,11 +88,10 @@ async function loadSkills() {
         const { data: frontmatter, content: skillContent } = matter(skillFileContent);
 
         if (frontmatter.name && frontmatter.description) {
-          // Cache skill metadata
           const resourceFiles = allFiles.filter(
             file => file.startsWith(skillDirPath) && path.basename(file) !== 'SKILL.md'
           );
-          
+
           // Parse allowed-tools (can be array or comma-separated string)
           let allowedTools = [];
           if (frontmatter['allowed-tools']) {
@@ -194,7 +131,7 @@ async function loadSkills() {
             allowedRoles: allowedRoles,
             resources: resourceFiles.map(f => path.relative(skillDirPath, f))
           });
-          
+
           console.error(`  -> Cached skill: ${frontmatter.name} with ${resourceFiles.length} resources`);
         } else {
           console.error(`  -> Skipping skill in '${skillFolderName}': 'name' or 'description' missing in SKILL.md frontmatter.`);
@@ -211,40 +148,14 @@ async function loadSkills() {
 /**
  * Register all MCP tools
  */
-function registerToolsAndResources() {
-  
+function registerTools() {
   // ============================================================
   // TOOL: list_skills
-  // List all available skills with their metadata
+  // List all available skills with full metadata for Aegis Router
   // ============================================================
   server.tool(
     'list_skills',
-    'List all available skills with their name and description. IMPORTANT: When asked to use a skill, ALWAYS call this first to find the skill, then call get_skill to read its instructions before proceeding.',
-    {},
-    async () => {
-      const skills = Array.from(skillsCache.values()).map(skill => ({
-        name: skill.name,
-        description: skill.description,
-        resource_count: skill.resources.length
-      }));
-      
-      return {
-        content: [{
-          type: 'text',
-          text: JSON.stringify(skills, null, 2)
-        }]
-      };
-    }
-  );
-  console.error('Registered tool: list_skills');
-
-  // ============================================================
-  // TOOL: get_skill_manifest
-  // Get the complete skill manifest for Aegis Router integration
-  // ============================================================
-  server.tool(
-    'get_skill_manifest',
-    'Get the complete skill manifest including permissions and allowed tools. Used by Aegis Router to determine skill availability and access control.',
+    'List all available skills with metadata, permissions, and allowed tools. Used by Aegis Router to determine skill availability and access control.',
     {},
     async () => {
       const skills = Array.from(skillsCache.values()).map(skill => ({
@@ -263,7 +174,7 @@ function registerToolsAndResources() {
       };
     }
   );
-  console.error('Registered tool: get_skill_manifest');
+  console.error('Registered tool: list_skills');
 
   // ============================================================
   // TOOL: get_skill
@@ -276,17 +187,16 @@ function registerToolsAndResources() {
       name: z.string().describe('The name of the skill')
     },
     async ({ name }) => {
-      const skill = skillsCache.get(name) || 
+      const skill = skillsCache.get(name) ||
         Array.from(skillsCache.values()).find(s => s.folderName === name);
-      
+
       if (!skill) {
         return {
           content: [{ type: 'text', text: `Error: Skill '${name}' not found. Use list_skills to see available skills.` }],
           isError: true
         };
       }
-      
-      // Return full SKILL.md content (frontmatter + body)
+
       const fullContent = await fs.readFile(skill.filePath, 'utf8');
       return {
         content: [{
@@ -309,16 +219,16 @@ function registerToolsAndResources() {
       skill: z.string().describe('The name of the skill')
     },
     async ({ skill: skillName }) => {
-      const skill = skillsCache.get(skillName) || 
+      const skill = skillsCache.get(skillName) ||
         Array.from(skillsCache.values()).find(s => s.folderName === skillName);
-      
+
       if (!skill) {
         return {
           content: [{ type: 'text', text: `Error: Skill '${skillName}' not found.` }],
           isError: true
         };
       }
-      
+
       return {
         content: [{
           type: 'text',
@@ -341,18 +251,18 @@ function registerToolsAndResources() {
       path: z.string().describe('Relative path to the resource (e.g., "scripts/run.py", "prompts/example.txt")')
     },
     async ({ skill: skillName, path: resourcePath }) => {
-      const skill = skillsCache.get(skillName) || 
+      const skill = skillsCache.get(skillName) ||
         Array.from(skillsCache.values()).find(s => s.folderName === skillName);
-      
+
       if (!skill) {
         return {
           content: [{ type: 'text', text: `Error: Skill '${skillName}' not found.` }],
           isError: true
         };
       }
-      
+
       const fullPath = path.join(skill.dirPath, resourcePath);
-      
+
       // Security: ensure path is within skill directory
       const resolvedPath = path.resolve(fullPath);
       const resolvedSkillDir = path.resolve(skill.dirPath);
@@ -362,7 +272,7 @@ function registerToolsAndResources() {
           isError: true
         };
       }
-      
+
       try {
         const content = await fs.readFile(fullPath, 'utf8');
         return { content: [{ type: 'text', text: content }] };
@@ -389,18 +299,18 @@ function registerToolsAndResources() {
       args: z.array(z.string()).optional().describe('Arguments to pass to the script')
     },
     async ({ skill: skillName, path: scriptPath, args = [] }) => {
-      const skill = skillsCache.get(skillName) || 
+      const skill = skillsCache.get(skillName) ||
         Array.from(skillsCache.values()).find(s => s.folderName === skillName);
-      
+
       if (!skill) {
         return {
           content: [{ type: 'text', text: `Error: Skill '${skillName}' not found.` }],
           isError: true
         };
       }
-      
+
       const fullPath = path.join(skill.dirPath, scriptPath);
-      
+
       // Security: ensure path is within skill directory
       const resolvedPath = path.resolve(fullPath);
       const resolvedSkillDir = path.resolve(skill.dirPath);
@@ -410,14 +320,14 @@ function registerToolsAndResources() {
           isError: true
         };
       }
-      
+
       if (!await fs.pathExists(fullPath)) {
         return {
           content: [{ type: 'text', text: `Error: Script not found: ${scriptPath}` }],
           isError: true
         };
       }
-      
+
       // Determine interpreter
       const ext = path.extname(fullPath).toLowerCase();
       const interpreters = {
@@ -426,22 +336,22 @@ function registerToolsAndResources() {
         '.js': 'node'
       };
       const interpreter = interpreters[ext];
-      
+
       if (!interpreter) {
         return {
           content: [{ type: 'text', text: `Error: Unsupported script type: ${ext}. Supported: .py, .sh, .js` }],
           isError: true
         };
       }
-      
+
       return new Promise((resolve) => {
         console.error(`Executing: ${interpreter} ${fullPath} ${args.join(' ')}`);
         const proc = spawn(interpreter, [fullPath, ...args], { cwd: skill.dirPath });
         let stdout = '', stderr = '';
-        
+
         proc.stdout.on('data', (data) => { stdout += data.toString(); });
         proc.stderr.on('data', (data) => { stderr += data.toString(); });
-        
+
         proc.on('close', (code) => {
           console.error(`Script exited with code ${code}`);
           if (code !== 0) {
@@ -453,7 +363,7 @@ function registerToolsAndResources() {
             resolve({ content: [{ type: 'text', text: stdout || '(No output)' }] });
           }
         });
-        
+
         proc.on('error', (err) => {
           resolve({
             content: [{ type: 'text', text: `Failed to execute script: ${err.message}` }],
@@ -468,19 +378,19 @@ function registerToolsAndResources() {
 
 async function main() {
   try {
-    console.error('Starting agent-skills-server...');
-    
+    console.error('Starting aegis-skills-server...');
+
     // Load skills into cache
     await loadSkills();
     console.error(`Loaded ${skillsCache.size} skills into cache.`);
-    
-    // Register all tools and resources
-    registerToolsAndResources();
-    console.error('All tools and resources registered. Server is ready.');
-    
+
+    // Register all tools
+    registerTools();
+    console.error('All tools registered. Server is ready.');
+
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('Agent skills server running on stdio');
+    console.error('Aegis skills server running on stdio');
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
