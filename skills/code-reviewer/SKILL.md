@@ -3,10 +3,13 @@ name: code-reviewer
 displayName: Code Reviewer
 description: コードレビューとベストプラクティスの提案を行うスキル
 allowed-tools:
-  - mcp__plugin_filesystem_filesystem__read_file
-  - mcp__plugin_github_github__get_pull_request
-  - mcp__plugin_github_github__list_pull_request_files
-  - mcp__plugin_github_github__create_review_comment
+  - filesystem__read_file
+  - filesystem__read_text_file
+  - filesystem__read_multiple_files
+  - filesystem__list_directory
+  - filesystem__directory_tree
+  - filesystem__search_files
+  - filesystem__get_file_info
 allowedRoles:
   - developer
   - senior-developer

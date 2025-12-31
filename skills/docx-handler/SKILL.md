@@ -3,9 +3,12 @@ name: docx-handler
 displayName: DOCX Handler
 description: Word文書の読み取り、編集、作成を行うスキル
 allowed-tools:
-  - mcp__plugin_filesystem_filesystem__read_file
-  - mcp__plugin_filesystem_filesystem__write_file
-  - mcp__plugin_filesystem_filesystem__list_directory
+  - filesystem__read_file
+  - filesystem__read_text_file
+  - filesystem__write_file
+  - filesystem__edit_file
+  - filesystem__list_directory
+  - filesystem__create_directory
 allowedRoles:
   - editor
   - admin

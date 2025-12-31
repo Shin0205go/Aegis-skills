@@ -3,10 +3,16 @@ name: data-analyzer
 displayName: Data Analyzer
 description: データ分析と可視化を行うスキル
 allowed-tools:
-  - mcp__plugin_filesystem_filesystem__read_file
-  - mcp__plugin_filesystem_filesystem__write_file
-  - mcp__plugin_database_database__query
-  - mcp__plugin_database_database__list_tables
+  - filesystem__read_file
+  - filesystem__read_text_file
+  - filesystem__read_multiple_files
+  - filesystem__write_file
+  - filesystem__edit_file
+  - filesystem__list_directory
+  - filesystem__directory_tree
+  - filesystem__search_files
+  - filesystem__get_file_info
+  - filesystem__create_directory
 allowedRoles:
   - analyst
   - data-scientist
@@ -24,7 +30,6 @@ allowedRoles:
 - 統計分析（平均、中央値、標準偏差など）
 - データの可視化（グラフ生成）
 - データクレンジングと前処理
-- SQLクエリの実行とデータ取得
 
 ## 対応データ形式
 
