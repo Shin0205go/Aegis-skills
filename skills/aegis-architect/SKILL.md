@@ -16,13 +16,6 @@ allowedRoles:
 
 このスキルは「たい焼きの型」です。どんなAIが使っても、選んだアーキタイプに従った正しい構造が生成されます。
 
-## 実装
-
-| 実装 | 特徴 | 用途 |
-|------|------|------|
-| **Rust版** (`aegis-architect`) | 高速、シングルバイナリ、Teraテンプレート | 本番推奨 |
-| Python版 (`scaffold_feature.py`) | 依存なし、手軽 | プロトタイプ/互換用 |
-
 ## コンセプト
 
 ```
@@ -59,7 +52,7 @@ After (Aegis Architect):
   → YES: python_script
 ```
 
-## 使い方（Rust版）
+## 使い方
 
 ### ビルド
 
@@ -107,13 +100,6 @@ aegis-architect scaffold \
 aegis-architect --archetypes-dir /path/to/archetypes scaffold ...
 ```
 
-## 使い方（Python版 - 互換用）
-
-```bash
-python scaffold_feature.py --name stock_price --description "株価取得"
-python scaffold_feature.py --list-archetypes
-```
-
 ## 生成されるファイル構造（rust_hexagonal）
 
 ```
@@ -159,15 +145,6 @@ target/
 | コードレビュー | 事後対応、手戻りが発生 |
 | **ツールで強制** | 物理的に正しい構造しか作れない |
 
-## なぜRustで書いたのか
-
-```
-Python版: 手軽だが、実行にPythonランタイムが必要
-Rust版:   シングルバイナリ配布、高速、型安全
-
-「RustでRustを生成する」= メタプログラミングの訓練
-```
-
 ## 使用例
 
 ```
@@ -195,7 +172,6 @@ AI（Aegis Architect使用）:
 
 ## 今後の拡張
 
-- [x] Rust版への移植（Teraテンプレートエンジン）
 - [ ] validate_arch - 既存コードのアーキテクチャ違反検出
 - [ ] migrate_to_hex - レガシーコードの移行支援
 - [ ] テスト雛形の自動生成
