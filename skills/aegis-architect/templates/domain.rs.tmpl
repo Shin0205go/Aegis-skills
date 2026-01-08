@@ -1,0 +1,64 @@
+//! Domain: {{name}}
+//! {{description}}
+//!
+//! # 聖域ルール
+//! - 外部クレート依存禁止（std以外のuseは原則NG）
+//! - 純粋な構造体とビジネスロジックのみ
+//! - このモジュールは「何を」するかを定義し、「どうやって」は知らない
+
+use std::fmt;
+
+/// {{pascal_name}}のリクエスト
+#[derive(Debug, Clone, PartialEq)]
+pub struct {{pascal_name}}Request {
+    // TODO: リクエストフィールドを定義
+    // 例: pub symbol: String,
+}
+
+/// {{pascal_name}}のレスポンス
+#[derive(Debug, Clone, PartialEq)]
+pub struct {{pascal_name}}Response {
+    // TODO: レスポンスフィールドを定義
+    // 例: pub value: f64,
+}
+
+/// ドメインエラー
+#[derive(Debug, Clone, PartialEq)]
+pub enum {{pascal_name}}Error {
+    /// バリデーションエラー
+    ValidationError(String),
+    /// 処理エラー
+    ProcessingError(String),
+}
+
+impl fmt::Display for {{pascal_name}}Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ValidationError(msg) => write!(f, "Validation error: {}", msg),
+            Self::ProcessingError(msg) => write!(f, "Processing error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for {{pascal_name}}Error {}
+
+impl {{pascal_name}}Request {
+    /// リクエストのバリデーション
+    pub fn validate(&self) -> Result<(), {{pascal_name}}Error> {
+        // TODO: バリデーションロジックを実装
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_request_validation() {
+        let request = {{pascal_name}}Request {
+            // TODO: テストデータ
+        };
+        assert!(request.validate().is_ok());
+    }
+}
