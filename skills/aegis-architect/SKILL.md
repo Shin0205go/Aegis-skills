@@ -37,7 +37,6 @@ After (Aegis Architect):
 |-------------|------|-------------|
 | `rust_hexagonal` | 堅牢なコアシステム | Domain/Port/Adapter (3ファイル) |
 | `rust_cli_simple` | 小さなCLIツール | main.rs + Cargo.toml |
-| `python_script` | 使い捨てスクリプト | script.py (1ファイル) |
 
 ### 選び方
 
@@ -45,11 +44,8 @@ After (Aegis Architect):
 「長期運用？外部依存の差し替え？チーム開発？」
   → YES: rust_hexagonal
 
-「単機能のCLIツール？学習目的？」
+「単機能のCLIツール？学習目的？PoC？」
   → YES: rust_cli_simple
-
-「自動化スクリプト？PoC？使い捨て？」
-  → YES: python_script
 ```
 
 ## 使い方
@@ -83,15 +79,6 @@ aegis-architect scaffold \
   --name my_tool \
   --description "便利ツール" \
   --archetype rust_cli_simple
-```
-
-### Pythonスクリプトとして生成
-
-```bash
-aegis-architect scaffold \
-  --name fetch_data \
-  --description "データ取得" \
-  --archetype python_script
 ```
 
 ### アーキタイプディレクトリを指定
