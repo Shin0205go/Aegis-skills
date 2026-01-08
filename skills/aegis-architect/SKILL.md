@@ -1,7 +1,7 @@
 ---
 name: aegis-architect
 displayName: Aegis Architect
-description: ヘキサゴナルアーキテクチャを強制するスキャフォールドツール
+description: アーキタイプベースのスキャフォールドツール - プロジェクトの重さに応じた型を選択
 allowed-tools:
   - aegis-skills__run_script
 allowedRoles:
@@ -14,7 +14,7 @@ allowedRoles:
 
 **AIをコーダーからオペレーターへ変える**
 
-このスキルは「たい焼きの型」です。どんなAIが使っても、出力は必ずヘキサゴナルアーキテクチャに従います。
+このスキルは「たい焼きの型」です。どんなAIが使っても、選んだアーキタイプに従った正しい構造が生成されます。
 
 ## コンセプト
 
@@ -24,23 +24,52 @@ Before (プロンプト依存):
   → 結果: 構造が崩れる
 
 After (Aegis Architect):
-  AI: 「scaffold_feature("stock_price") を実行」
+  AI: 「scaffold_feature --archetype rust_hexagonal」を実行
   Aegis: (ガシャン！) 3ファイルを強制生成
-  → 結果: 誰がやっても100%ヘキサゴナル
+  → 結果: 誰がやっても100%正しい構造
 ```
 
-## ツール
+## アーキタイプ（型の選択）
 
-### `scaffold_feature`
+プロジェクトの「重さ」に応じて適切な型を選択します。
 
-新機能のスケルトンをヘキサゴナル構造で生成します。
+| アーキタイプ | 用途 | 生成ファイル |
+|-------------|------|-------------|
+| `rust_hexagonal` | 堅牢なコアシステム | Domain/Port/Adapter (3ファイル) |
+| `rust_cli_simple` | 小さなCLIツール | main.rs + Cargo.toml |
+| `python_script` | 使い捨てスクリプト | script.py (1ファイル) |
 
-**使い方:**
+### 選び方
+
+```
+「長期運用？外部依存の差し替え？チーム開発？」
+  → YES: rust_hexagonal
+
+「単機能のCLIツール？学習目的？」
+  → YES: rust_cli_simple
+
+「自動化スクリプト？PoC？使い捨て？」
+  → YES: python_script
+```
+
+## 使い方
+
+### アーキタイプ一覧を確認
+
 ```bash
-run_script aegis-architect scaffold_feature.py --name market_analysis --description "株価を分析する機能"
+run_script aegis-architect scaffold_feature.py --list-archetypes
 ```
 
-**生成されるファイル:**
+### Hexagonal構造で生成（デフォルト）
+
+```bash
+run_script aegis-architect scaffold_feature.py \
+  --name market_analysis \
+  --description "株価を分析する機能" \
+  --target ./aegis-core
+```
+
+生成されるファイル:
 ```
 aegis-core/
 ├── src/domain/market_analysis.rs      # 聖域：純粋なドメインモデル
@@ -48,20 +77,25 @@ aegis-core/
 └── src/adapters/market_analysis_adapter.rs  # 実装の雛形
 ```
 
-### `validate_arch`
+### シンプルなCLIツールとして生成
 
-既存コードがアーキテクチャに違反していないか検証します。
+```bash
+run_script aegis-architect scaffold_feature.py \
+  --name my_tool \
+  --description "便利ツール" \
+  --archetype rust_cli_simple
+```
 
-**チェック項目:**
-- Domain層が外部クレートに依存していないか
-- Port層がDomain層の型のみを使用しているか
-- Adapter層が適切にPortを実装しているか
+### Pythonスクリプトとして生成
 
-### `migrate_to_hex`
+```bash
+run_script aegis-architect scaffold_feature.py \
+  --name fetch_data \
+  --description "データ取得" \
+  --archetype python_script
+```
 
-レガシーコードをヘキサゴナル構造へ段階的に移行します。
-
-## 設計原則
+## 設計原則（rust_hexagonal）
 
 ```
 ┌─────────────────────────────────────────┐
@@ -103,16 +137,27 @@ aegis-core/
 ユーザー: 「株価取得機能を追加して」
 
 AI（Aegis Architect使用）:
-1. scaffold_feature("stock_price", "外部APIから株価を取得") を実行
-2. 生成された domain/stock_price.rs にドメインモデルを定義
-3. ports/stock_price_port.rs にトレイトメソッドを追加
-4. adapters/stock_price_adapter.rs に実装を書く
+1. プロジェクトの規模を判断 → AEGIS本体なのでrust_hexagonalを選択
+2. scaffold_feature.py --name stock_price --archetype rust_hexagonal を実行
+3. 生成された domain/stock_price.rs にドメインモデルを定義
+4. ports/stock_price_port.rs にトレイトメソッドを追加
+5. adapters/stock_price_adapter.rs に実装を書く
 
 → 手順を飛ばしたり、構造を無視することが不可能
 ```
 
+## アーキタイプの追加方法
+
+新しいアーキタイプを追加するには:
+
+1. `archetypes/<name>/` ディレクトリを作成
+2. `manifest.json` でメタデータと生成ファイルを定義
+3. テンプレートファイル (`.tmpl`) を配置
+
 ## 今後の拡張
 
+- [ ] validate_arch - 既存コードのアーキテクチャ違反検出
+- [ ] migrate_to_hex - レガシーコードの移行支援
 - [ ] テスト雛形の自動生成
 - [ ] CI連携（PRでvalidate_archを自動実行）
-- [ ] アーキテクチャ図の自動生成
+- [ ] Rust版への移植（Tera/Askamaテンプレートエンジン）

@@ -1,0 +1,35 @@
+//! {{pascal_name}} - {{description}}
+//!
+//! シンプルなCLIツール
+
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // TODO: 引数パース（必要に応じてclapを使用）
+    let args: Vec<String> = std::env::args().collect();
+
+    println!("{{pascal_name}} starting...");
+
+    // TODO: メイン処理を実装
+    run(&args)?;
+
+    Ok(())
+}
+
+fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
+    // TODO: 処理を実装
+    println!("Arguments: {:?}", args);
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_run() {
+        let args = vec!["test".to_string()];
+        assert!(run(&args).is_ok());
+    }
+}

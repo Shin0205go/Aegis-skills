@@ -1,0 +1,23 @@
+{
+  "name": "python_script",
+  "displayName": "Python Script",
+  "description": "単発の自動化スクリプト用。シンプルな1ファイル構成。",
+  "use_when": [
+    "自動化スクリプト",
+    "データ処理の使い捨てツール",
+    "プロトタイプ/PoC",
+    "APIの動作確認"
+  ],
+  "avoid_when": [
+    "本番システム",
+    "パフォーマンスが重要",
+    "長期運用"
+  ],
+  "files": [
+    {
+      "template": "script.py.tmpl",
+      "output": "{{name}}.py",
+      "layer": "main"
+    }
+  ]
+}
