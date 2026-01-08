@@ -1,0 +1,33 @@
+{
+  "name": "rust_hexagonal",
+  "displayName": "Rust Hexagonal Architecture",
+  "description": "堅牢性が必要なコアシステム用。Domain/Port/Adapterで依存関係を厳格に分離する。",
+  "use_when": [
+    "長期運用するシステム",
+    "外部依存を差し替える可能性がある",
+    "テスタビリティが重要",
+    "チーム開発でアーキテクチャを強制したい"
+  ],
+  "avoid_when": [
+    "単発の使い捨てスクリプト",
+    "プロトタイプ/PoC",
+    "1ファイルで完結する処理"
+  ],
+  "files": [
+    {
+      "template": "domain.rs.tmpl",
+      "output": "src/domain/{{name}}.rs",
+      "layer": "domain"
+    },
+    {
+      "template": "port.rs.tmpl",
+      "output": "src/ports/{{name}}_port.rs",
+      "layer": "port"
+    },
+    {
+      "template": "adapter.rs.tmpl",
+      "output": "src/adapters/{{name}}_adapter.rs",
+      "layer": "adapter"
+    }
+  ]
+}

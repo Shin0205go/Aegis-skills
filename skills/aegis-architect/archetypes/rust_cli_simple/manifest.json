@@ -1,0 +1,28 @@
+{
+  "name": "rust_cli_simple",
+  "displayName": "Rust Simple CLI",
+  "description": "小さなCLIツール用。レイヤー分けなしの単純構造。",
+  "use_when": [
+    "単機能のコマンドラインツール",
+    "1ファイルで完結する処理",
+    "プロトタイプ/PoC",
+    "学習目的"
+  ],
+  "avoid_when": [
+    "外部APIとの連携が複雑",
+    "長期運用が前提",
+    "チーム開発"
+  ],
+  "files": [
+    {
+      "template": "main.rs.tmpl",
+      "output": "src/main.rs",
+      "layer": "main"
+    },
+    {
+      "template": "Cargo.toml.tmpl",
+      "output": "Cargo.toml",
+      "layer": "config"
+    }
+  ]
+}

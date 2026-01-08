@@ -1,0 +1,59 @@
+//! Port: {{name}}
+//! {{description}}
+//!
+//! # ポートルール
+//! - Domain層の型のみを使用
+//! - 実装詳細を一切含まない
+//! - 非同期トレイトで外部との境界を定義
+
+use async_trait::async_trait;
+use crate::domain::{{name}}::{{"{"}}{{pascal_name}}Request, {{pascal_name}}Response, {{pascal_name}}Error{{"}"}};
+
+/// {{pascal_name}}のポート（インターフェース）
+///
+/// このトレイトを実装することで、異なるアダプター（Gemini, Claude, ローカル実装等）を
+/// 差し替え可能にする。
+#[async_trait]
+pub trait {{pascal_name}}Port: Send + Sync {
+    /// {{description}}を実行
+    ///
+    /// # Arguments
+    /// * `request` - 処理リクエスト
+    ///
+    /// # Returns
+    /// * `Ok(response)` - 成功時のレスポンス
+    /// * `Err(error)` - ドメインエラー
+    async fn execute(
+        &self,
+        request: {{pascal_name}}Request,
+    ) -> Result<{{pascal_name}}Response, {{pascal_name}}Error>;
+
+    /// ヘルスチェック（オプション）
+    async fn health_check(&self) -> bool {
+        true
+    }
+}
+
+/// ポートのモック実装（テスト用）
+#[cfg(test)]
+pub mod mock {
+    use super::*;
+
+    pub struct Mock{{pascal_name}}Port {
+        pub response: Option<{{pascal_name}}Response>,
+        pub error: Option<{{pascal_name}}Error>,
+    }
+
+    #[async_trait]
+    impl {{pascal_name}}Port for Mock{{pascal_name}}Port {
+        async fn execute(
+            &self,
+            _request: {{pascal_name}}Request,
+        ) -> Result<{{pascal_name}}Response, {{pascal_name}}Error> {
+            if let Some(ref error) = self.error {
+                return Err(error.clone());
+            }
+            Ok(self.response.clone().unwrap())
+        }
+    }
+}

@@ -1,0 +1,65 @@
+//! Adapter: {{name}}
+//! {{description}}
+//!
+//! # アダプタールール
+//! - 外部依存はここに閉じ込める
+//! - Portトレイトを実装
+//! - エラーはドメインエラーに変換
+
+use async_trait::async_trait;
+use crate::domain::{{name}}::{{"{"}}{{pascal_name}}Request, {{pascal_name}}Response, {{pascal_name}}Error{{"}"}};
+use crate::ports::{{name}}_port::{{pascal_name}}Port;
+
+/// {{pascal_name}}のアダプター実装
+///
+/// TODO: 実際の外部サービス（Gemini API等）への接続を実装
+pub struct {{pascal_name}}Adapter {
+    // TODO: 必要なフィールドを追加
+    // 例: api_key: String,
+    // 例: client: reqwest::Client,
+}
+
+impl {{pascal_name}}Adapter {
+    /// 新しいアダプターを作成
+    pub fn new(/* TODO: 必要な引数 */) -> Self {
+        Self {
+            // TODO: 初期化
+        }
+    }
+}
+
+#[async_trait]
+impl {{pascal_name}}Port for {{pascal_name}}Adapter {
+    async fn execute(
+        &self,
+        request: {{pascal_name}}Request,
+    ) -> Result<{{pascal_name}}Response, {{pascal_name}}Error> {
+        // 1. リクエストのバリデーション
+        request.validate()?;
+
+        // 2. TODO: 外部APIへのリクエスト
+        // let external_response = self.call_external_api(&request).await
+        //     .map_err(|e| {{pascal_name}}Error::ProcessingError(e.to_string()))?;
+
+        // 3. TODO: レスポンスの変換
+        // Ok({{pascal_name}}Response { ... })
+
+        todo!("Implement external API call")
+    }
+
+    async fn health_check(&self) -> bool {
+        // TODO: 外部サービスのヘルスチェック
+        true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_adapter_creation() {
+        let _adapter = {{pascal_name}}Adapter::new();
+        // TODO: テストを実装
+    }
+}
