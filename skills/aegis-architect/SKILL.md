@@ -16,6 +16,13 @@ allowedRoles:
 
 このスキルは「たい焼きの型」です。どんなAIが使っても、選んだアーキタイプに従った正しい構造が生成されます。
 
+## 実装
+
+| 実装 | 特徴 | 用途 |
+|------|------|------|
+| **Rust版** (`aegis-architect`) | 高速、シングルバイナリ、Teraテンプレート | 本番推奨 |
+| Python版 (`scaffold_feature.py`) | 依存なし、手軽 | プロトタイプ/互換用 |
+
 ## コンセプト
 
 ```
@@ -24,7 +31,7 @@ Before (プロンプト依存):
   → 結果: 構造が崩れる
 
 After (Aegis Architect):
-  AI: 「scaffold_feature --archetype rust_hexagonal」を実行
+  AI: 「aegis-architect scaffold --name stock_price」を実行
   Aegis: (ガシャン！) 3ファイルを強制生成
   → 結果: 誰がやっても100%正しい構造
 ```
@@ -52,35 +59,34 @@ After (Aegis Architect):
   → YES: python_script
 ```
 
-## 使い方
+## 使い方（Rust版）
+
+### ビルド
+
+```bash
+cd aegis-architect-rs
+cargo build --release
+```
 
 ### アーキタイプ一覧を確認
 
 ```bash
-run_script aegis-architect scaffold_feature.py --list-archetypes
+aegis-architect list
 ```
 
 ### Hexagonal構造で生成（デフォルト）
 
 ```bash
-run_script aegis-architect scaffold_feature.py \
+aegis-architect scaffold \
   --name market_analysis \
   --description "株価を分析する機能" \
   --target ./aegis-core
 ```
 
-生成されるファイル:
-```
-aegis-core/
-├── src/domain/market_analysis.rs      # 聖域：純粋なドメインモデル
-├── src/ports/market_analysis_port.rs  # インターフェース定義
-└── src/adapters/market_analysis_adapter.rs  # 実装の雛形
-```
-
 ### シンプルなCLIツールとして生成
 
 ```bash
-run_script aegis-architect scaffold_feature.py \
+aegis-architect scaffold \
   --name my_tool \
   --description "便利ツール" \
   --archetype rust_cli_simple
@@ -89,10 +95,32 @@ run_script aegis-architect scaffold_feature.py \
 ### Pythonスクリプトとして生成
 
 ```bash
-run_script aegis-architect scaffold_feature.py \
+aegis-architect scaffold \
   --name fetch_data \
   --description "データ取得" \
   --archetype python_script
+```
+
+### アーキタイプディレクトリを指定
+
+```bash
+aegis-architect --archetypes-dir /path/to/archetypes scaffold ...
+```
+
+## 使い方（Python版 - 互換用）
+
+```bash
+python scaffold_feature.py --name stock_price --description "株価取得"
+python scaffold_feature.py --list-archetypes
+```
+
+## 生成されるファイル構造（rust_hexagonal）
+
+```
+target/
+├── src/domain/market_analysis.rs      # 聖域：純粋なドメインモデル
+├── src/ports/market_analysis_port.rs  # インターフェース定義
+└── src/adapters/market_analysis_adapter.rs  # 実装の雛形
 ```
 
 ## 設計原則（rust_hexagonal）
@@ -131,6 +159,15 @@ run_script aegis-architect scaffold_feature.py \
 | コードレビュー | 事後対応、手戻りが発生 |
 | **ツールで強制** | 物理的に正しい構造しか作れない |
 
+## なぜRustで書いたのか
+
+```
+Python版: 手軽だが、実行にPythonランタイムが必要
+Rust版:   シングルバイナリ配布、高速、型安全
+
+「RustでRustを生成する」= メタプログラミングの訓練
+```
+
 ## 使用例
 
 ```
@@ -138,7 +175,7 @@ run_script aegis-architect scaffold_feature.py \
 
 AI（Aegis Architect使用）:
 1. プロジェクトの規模を判断 → AEGIS本体なのでrust_hexagonalを選択
-2. scaffold_feature.py --name stock_price --archetype rust_hexagonal を実行
+2. aegis-architect scaffold --name stock_price を実行
 3. 生成された domain/stock_price.rs にドメインモデルを定義
 4. ports/stock_price_port.rs にトレイトメソッドを追加
 5. adapters/stock_price_adapter.rs に実装を書く
@@ -154,10 +191,12 @@ AI（Aegis Architect使用）:
 2. `manifest.json` でメタデータと生成ファイルを定義
 3. テンプレートファイル (`.tmpl`) を配置
 
+テンプレートでは `{{ name }}`, `{{ pascal_name }}`, `{{ description }}` が使用可能。
+
 ## 今後の拡張
 
+- [x] Rust版への移植（Teraテンプレートエンジン）
 - [ ] validate_arch - 既存コードのアーキテクチャ違反検出
 - [ ] migrate_to_hex - レガシーコードの移行支援
 - [ ] テスト雛形の自動生成
 - [ ] CI連携（PRでvalidate_archを自動実行）
-- [ ] Rust版への移植（Tera/Askamaテンプレートエンジン）
